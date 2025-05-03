@@ -1,11 +1,35 @@
-/* 
+body {
+  background: url(https://i.pinimg.com/originals/0a/b8/ce/0ab8ce6d94dc4bd5183e953ad6ef797d.gif);
+  background-repeat: none;
+  background-size: cover;
 
-    You can write your own styles here...
-    
-    
-    ...Or you can use the import command to include 
-    other sylesheets into your bunde as well, e.j:
-    
-    import 'relative/path/to/stylesheet.scss';
+  font-family: "VT323", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
 
-*/
+.quesito {
+  background: url(https://wallpapersok.com/images/high/vaporwave-of-moon-and-stars-704rd1yy9gib6f00.jpg);
+  background-repeat: none;
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  width: 500px;
+  filter: brightness(90%);
+  min-height: 200px;
+}
+
+.quesito:hover {
+  filter: saturate(1.2);
+  cursor: pointer;
+}
+
+li {
+  list-style-type: none;
+  font-size: 1.5rem;
+  color: white;
+}
+
+li:hover {
+  color: rgb(182, 182, 244);
+}
