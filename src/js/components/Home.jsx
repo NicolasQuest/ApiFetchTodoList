@@ -23,19 +23,38 @@ const Home = () => {
     setVisibleIndex(index);
   };
 
-  const taskToEdit = (itemToEdit) => {
-    setEditedTask(itemToEdit.target.value);
+  const taskToEdit = (event) => {
+    setEditedTask(event.target.value);
   };
 
-  const toggleTaskMarked = (index) => {
-    const copyTodoList = [...todoList];
-    copyTodoList[index].isDone = true;
-    setTodoList(copyTodoList);
+  const toggleTaskMarked = async (index) => {
+    const task = todoList[index];
+    try {
+      await fetch(`https://playground.4geeks.com/todo/todos/${task.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          label: task.label,
+          is_done: !task.is_done,
+        }),
+      });
+      getTodo();
+    } catch (error) {
+      console.error("No se pudo marcar como hecha:", error);
+    }
   };
-  const removeItem = (itemToRemove) => {
-    let updatedList = [...todoList];
-    updatedList.splice(itemToRemove, 1);
-    setTodoList(updatedList);
+
+  //PARA eliminar x item
+  const removeItem = async (itemToRemove) => {
+    const task = todoList[itemToRemove];
+    try {
+      await deleteTask(task.id); // elimino del backend
+      getTodo();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
   const handleMouseLeave = () => {
     setVisibleIndex(null);
@@ -43,18 +62,117 @@ const Home = () => {
 
   const removeItems = () => {
     setTodoList([]);
+    deleteUser();
   };
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
-      setTodoList([
-        ...todoList,
-        {
-          label: inputValue,
-          isDone: false,
-        },
-      ]);
-      setInputValue("");
+      sendTask();
+    }
+  };
+
+  //  FETCH API
+
+  let getTodo = () => {
+    fetch("https://playground.4geeks.com/todo/users/NicolasQuest", {
+      method: "GET",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`error : ${response.statusText}`);
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        setTodoList(data.todos);
+      })
+      .catch((error) => {
+        console.log("Looks like there was a problem, error: \n", error);
+        alert("Looks like there was a problem, error: \n", error);
+      });
+  };
+
+  useEffect(() => {
+    getTodo();
+  }, []);
+
+  function sendTask() {
+    let bodyData = {
+      label: inputValue,
+      is_done: false,
+    };
+    fetch("https://playground.4geeks.com/todo/todos/NicolasQuest", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(bodyData),
+    })
+      .then((response) => {
+        console.log(response);
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        setInputValue("");
+        getTodo();
+      })
+      .catch((error) => {
+        console.error("Looks like there was a problem, error: \n", error);
+      });
+  }
+
+  function deleteUser() {
+    fetch("https://playground.4geeks.com/todo/users/NicolasQuest", {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`error : ${response.statusText}`);
+        console.log(response);
+        return response.text();
+      })
+      .then((data) => {
+        console.log("Usuario eliminado:", data);
+        setTodoList([]);
+        return createUser(); //el return me funciona como un await (.then + return = await)
+      })
+      .then(() => {
+        getTodo();
+      })
+      .catch((error) => {
+        console.error("Looks like there was a problem, error: \n", error);
+      });
+  }
+  function createUser() {
+    return fetch("https://playground.4geeks.com/todo/users/NicolasQuest", {
+      method: "POST",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`error : ${response.statusText}`);
+        return response.json();
+      })
+      .then((data) => {
+        console.log("User created:", data);
+      })
+      .catch((error) => {
+        console.error("Error while creating the user", error);
+        alert("Looks like there was a problem, error: \n" + error);
+      });
+  }
+  const deleteTask = async (taskId) => {
+    const response = await fetch(
+      `https://playground.4geeks.com/todo/todos/${taskId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      console.error("error", response.status, response.statusText);
+      return {
+        error: { status: response.status, statusText: response.statusText },
+      };
     }
   };
 
@@ -84,11 +202,11 @@ const Home = () => {
               {todoList.map((task, index) => (
                 <div
                   style={{
-                    borderBottom: task.isDone
+                    borderBottom: task.is_done
                       ? "2.5px solid rgb(4, 86, 104)"
                       : "none",
                   }}
-                  key={index}
+                  key={task.id}
                   className="d-flex align-self-center py-1"
                   onMouseEnter={() => handleMouseEnter(index)}
                   onMouseLeave={handleMouseLeave}
@@ -143,8 +261,8 @@ const Home = () => {
           </div>
         </div>
       )}
-      <button onClick={removeItems} className="btn btn-danger my-2">
-        Clear All!{" "}
+      <button onClick={removeItems} className="btn btn-danger my-2 mx-1">
+        Clear All!
       </button>
 
       {showModal && (
@@ -166,11 +284,28 @@ const Home = () => {
             </Button>
             <Button
               variant="success"
-              onClick={() => {
-                const updatedTodoList = [...todoList];
-                updatedTodoList[currentTaskIndex].label = editedTask;
-                setTodoList(updatedTodoList);
-                setShowModal(false);
+              onClick={async () => {
+                const task = todoList[currentTaskIndex];
+                const taskId = task.id;
+                try {
+                  await fetch(
+                    `https://playground.4geeks.com/todo/todos/${taskId}`,
+                    {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        label: editedTask,
+                        is_done: !task.is_done,
+                      }),
+                    }
+                  );
+                  setShowModal(false);
+                  getTodo();
+                } catch (error) {
+                  console.error("Failed to edit task", error);
+                }
               }}
             >
               Save changes
