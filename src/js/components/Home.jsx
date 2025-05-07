@@ -76,7 +76,10 @@ const Home = () => {
   let getTodo = () => {
     fetch("https://playground.4geeks.com/todo/users/NicolasQuest")
       .then((response) => {
-        if (!response.ok) throw new Error(`error : ${response.statusText}`);
+        if (!response.ok) {
+          createUser();
+          throw new Error(`error : ${response.statusText}`);
+        }
         return response.json();
       })
       .then((data) => {
