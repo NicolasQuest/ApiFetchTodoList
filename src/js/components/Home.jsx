@@ -265,6 +265,15 @@ const Home = () => {
       <button onClick={removeItems} className="btn btn-danger my-2 mx-1">
         Clear All!
       </button>
+      <button
+        onClick={(e) => {
+          alert("Website created by NicolasQuest for educational purpose");
+        }}
+        className="btn btn-success my-2 mx-1"
+      >
+        by NicolasQuest
+      </button>
+
 
       {showModal && (
         <Modal show={showModal} onHide={() => setShowModal(false)}>
